@@ -1,6 +1,6 @@
 {
   "name": "wx-pub-msg",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A tool for sending group message in WeiXin public account",
   "main": "index.js",
   "scripts": {

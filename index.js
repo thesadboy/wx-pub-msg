@@ -7,9 +7,35 @@ var superAgent = require('superagent'),
 	loginData,
 	friends;
 
+/**
+ * 获取MD5值
+ * @param pwd
+ * @returns {*}
+ */
 var getMd5 = function (pwd) {
 		md5.update(pwd);
 		return md5.digest('hex');
+	},
+	/**
+	 * 格式化日期
+	 * @param date
+	 * @param format
+	 * @returns {*|string}
+	 */
+	formatDate = function (date, format) {
+		var _format = format || 'yyyy-MM-dd HH:mm:ss',
+			$_o = {
+				'y+': date.getFullYear(),
+				'M+': date.getMonth() + 1,
+				'd+': date.getDate(),
+				'H+': date.getHours(),
+				'm+': date.getMinutes(),
+				's+': date.getSeconds()
+			};
+		for (var o in $_o) {
+			_format = _format.replace(new RegExp('(' + o + ')'), ($_o[o] < 10 ? '0' + $_o[o] : $_o[o]));
+		}
+		return _format;
 	},
 	/**
 	 * 登录
@@ -84,14 +110,14 @@ var getMd5 = function (pwd) {
 			.set('Referer', 'https://mp.weixin.qq.com/cgi-bin/singlesendpage?t=message/send&action=index&tofakeid=' + friend.id + '&token=' + loginData.token + '&lang=zh_CN')
 			.end(function (err, res) {
 				if (err || res.body.base_resp.ret != 0) {
-					console.error('发送到“%s”失败！', friend.nick_name);
+					console.error('[WX-PUB-MSG]发送到“%s”失败！', friend.nick_name);
 					if (res && res.body.base_resp.ret == 10706) {
-						console.warn('用户“%s”已经超过48小时未联系，故无法发送消息！', friend.nick_name)
+						console.warn('[WX-PUB-MSG %s]用户“%s”已经超过48小时未联系，故无法发送消息！', formatDate(new Date()), friend.nick_name)
 					} else {
-						console.error('失败日志：', err || res.text);
+						console.error('[WX-PUB-MSG %s]失败日志：', formatDate(new Date()), err || res.text);
 					}
 				} else {
-					console.info('发送到“%s”成功！', friend.nick_name);
+					console.info('[WX-PUB-MSG %s]发送到“%s”成功！', formatDate(new Date()), friend.nick_name);
 				}
 			});
 	},
@@ -104,6 +130,13 @@ var getMd5 = function (pwd) {
 		//TODO 优先调用默认的群发
 	};
 
+/**
+ * 群发消息
+ * @param user 公众号用户名
+ * @param pwd 公众号密码
+ * @param message 需要发送的消息体<文本信息，可加连接>
+ * @param cb 回调函数
+ */
 exports.send = function (user, pwd, message, cb) {
 	login(user, pwd, function (err) {
 		if (err) {
@@ -116,7 +149,7 @@ exports.send = function (user, pwd, message, cb) {
 			friends.forEach(function (friend) {
 				sendMsgToFriend(friend, message);
 			});
-			console.info('已经将需要发送的消息在后台进行对 %d 个用户发送', friends.length);
+			console.info('[WX-PUB-MSG %s]已经将需要发送的消息在后台进行对 %d 个用户发送', formatDate(new Date()), friends.length);
 			return cb && cb();
 		});
 	});
