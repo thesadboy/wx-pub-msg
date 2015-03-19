@@ -1,0 +1,20 @@
+{
+  "name": "wx-pub-msg",
+  "version": "1.0.0",
+  "description": "A tool for sending group message in WeiXin public account",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "thesadboy@qq.com",
+  "license": "MIT",
+  "dependencies": {
+    "superagent": "^1.1.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "Weixin",
+    "WX",
+    "public"
+  ]
+}
