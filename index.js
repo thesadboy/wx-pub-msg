@@ -102,35 +102,7 @@ var getMd5 = function (pwd) {
 	 * @param cb 发送后的回调
 	 */
 	sendGroupMsg = function (msg, cb) {
-		var sendParams = {
-			type: 1,
-			content: msg,
-			error: false,
-			tofakeid: friend.id,
-			token: loginData.token,
-			lang: 'zh_CN',
-			f: 'json',
-			ajax: 1,
-			random: Math.random(),
-			imgcode: ''
-		};
-		superAgent.post('https://mp.weixin.qq.com/cgi-bin/singlesend?t=ajax-response&f=json&token=' + loginData.token + '&lang=zh_CN')
-			.type('form')
-			.send(sendParams)
-			.set('Cookie', loginData.cookie)
-			.set('Referer', 'https://mp.weixin.qq.com/cgi-bin/singlesendpage?t=message/send&action=index&tofakeid=' + friend.id + '&token=' + loginData.token + '&lang=zh_CN')
-			.end(function (err, res) {
-				if (err || res.body.base_resp.ret != 0) {
-					console.error('发送到“%s”失败！', friend.nick_name);
-					if (res && res.body.base_resp.ret == 10706) {
-						console.warn('用户“%s”已经超过48小时未联系，故无法发送消息！', friend.nick_name)
-					} else {
-						console.error('失败日志：', err || res.text);
-					}
-				} else {
-					console.info('发送到“%s”成功！', friend.nick_name);
-				}
-			});
+		//TODO 优先调用默认的群发
 	};
 
 exports.send = function (user, pwd, message, cb) {
