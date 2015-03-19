@@ -66,21 +66,20 @@ var getMd5 = function (pwd) {
 	 * @param msg 发送的消息体
 	 */
 	sendMsgToFriend = function (friend, msg) {
-		var sendParams = {
-			type: 1,
-			content: msg,
-			error: false,
-			tofakeid: friend.id,
-			token: loginData.token,
-			lang: 'zh_CN',
-			f: 'json',
-			ajax: 1,
-			random: Math.random(),
-			imgcode: ''
-		};
 		superAgent.post('https://mp.weixin.qq.com/cgi-bin/singlesend?t=ajax-response&f=json&token=' + loginData.token + '&lang=zh_CN')
 			.type('form')
-			.send(sendParams)
+			.send({
+				type: 1,
+				content: msg,
+				error: false,
+				tofakeid: friend.id,
+				token: loginData.token,
+				lang: 'zh_CN',
+				f: 'json',
+				ajax: 1,
+				random: Math.random(),
+				imgcode: ''
+			})
 			.set('Cookie', loginData.cookie)
 			.set('Referer', 'https://mp.weixin.qq.com/cgi-bin/singlesendpage?t=message/send&action=index&tofakeid=' + friend.id + '&token=' + loginData.token + '&lang=zh_CN')
 			.end(function (err, res) {
