@@ -112,7 +112,7 @@ var getMd5 = function (pwd) {
 				if (err || res.body.base_resp.ret != 0) {
 					console.error('[WX-PUB-MSG]发送到“%s”失败！', friend.nick_name);
 					if (res && res.body.base_resp.ret == 10706) {
-						console.warn('[WX-PUB-MSG %s]用户“%s”已经超过48小时未联系，故无法发送消息！', formatDate(new Date()), friend.nick_name)
+						console.warn('[WX-PUB-MSG %s]用户“%s”已经超过48小时未互动，故无法发送消息！', formatDate(new Date()), friend.nick_name)
 					} else {
 						console.error('[WX-PUB-MSG %s]失败日志：', formatDate(new Date()), err || res.text);
 					}
@@ -121,13 +121,72 @@ var getMd5 = function (pwd) {
 				}
 			});
 	},
+	getOperationSeq = function (cb) {
+		superAgent.get('https://mp.weixin.qq.com/cgi-bin/masssendpage?t=mass/send&token=' + loginData.token + '&lang=zh_CN')
+			.set('Cookie', loginData.cookie)
+			.end(function (err, res) {
+				if (err) {
+					console.log(err);
+					return cb && cb('获取operation_se失败');
+				}
+				var seq = res.text.replace(/[\r\n\s]/gim, '').match(/operation_seq:"(\d+)/);
+				seq = seq.length > 1 ? seq[1] : null;
+				if (!seq) {
+					return cb && cb('获取operation_se失败');
+				}
+				return cb && cb(null, seq);
+			});
+	},
 	/**
 	 * 调用群发（每天只有一次机会）
-	 * @param msg 发送消息体
+	 * @param message 发送消息体
 	 * @param cb 发送后的回调
 	 */
-	sendGroupMsg = function (msg, cb) {
-		//TODO 优先调用默认的群发
+	sendGroupMsg = function (message, cb) {
+		return getOperationSeq(function (err, seq) {
+			if (err) {
+				return cb && cb('无法采用默认的群发方式发送');
+			}
+			superAgent.post('https://mp.weixin.qq.com/cgi-bin/masssend?t=ajax-response&token=' + loginData.token + '&lang=zh_CN')
+				.type('form')
+				.send({
+					token: loginData.token,
+					lang: 'zh_CN',
+					f: 'json',
+					ajax: 1,
+					random: Math.random(),
+					type: 1,
+					content: message,
+					cardlimit: 1,
+					sex: 0,
+					groupid: -1,
+					synctxweibo: 0,
+					enablecomment: 0,
+					country: '',
+					province: '',
+					city: '',
+					imgcode: '',
+					operation_seq: seq
+				})
+				.set('Cookie', loginData.cookie)
+				.set('Referer', 'https://mp.weixin.qq.com/cgi-bin/masssendpage?t=mass/send&token=' + loginData.token + '&lang=zh_CN')
+				.end(function (err, res) {
+					if (err) {
+						return cb && cb('无法采用默认的群发方式发送');
+					}
+					if (res.body.base_resp.ret != 0) {
+						if (res.body.base_resp.ret == -1) {
+							console.warn('[WX-PUB-MSG %s]系统可能采用了群发验证，无法采用默认群发方式，请检查微信公众号的安全设置', formatDate(new Date()));
+							return cb && cb('系统可能采用了群发验证，无法采用默认群发方式，请检查微信公众号的安全设置');
+						}
+						if (res.body.base_resp.ret == 64004) {
+							return cb && cb('今天已经无法采用自带群发方式发送');
+						}
+						return cb && cb('无法采用自带的群发方式发送');
+					}
+					return cb && cb();
+				});
+		});
 	};
 
 /**
@@ -142,15 +201,21 @@ exports.send = function (user, pwd, message, cb) {
 		if (err) {
 			return cb && cb(err);
 		}
-		getFriendsList(function (err) {
-			if (err) {
-				return cb && cb(err);
+		sendGroupMsg(message, function (err) {
+			if (!err) {
+				return cb && cb();
 			}
-			friends.forEach(function (friend) {
-				sendMsgToFriend(friend, message);
+			console.info('[WX-PUB-MSG %s]无法采用默认的群发方式发送信息，改用循环调用发送', formatDate(new Date()));
+			getFriendsList(function (err) {
+				if (err) {
+					return cb && cb(err);
+				}
+				friends.forEach(function (friend) {
+					sendMsgToFriend(friend, message);
+				});
+				console.info('[WX-PUB-MSG %s]已经将需要发送的消息在后台进行对 %d 个用户发送', formatDate(new Date()), friends.length);
+				return cb && cb();
 			});
-			console.info('[WX-PUB-MSG %s]已经将需要发送的消息在后台进行对 %d 个用户发送', formatDate(new Date()), friends.length);
-			return cb && cb();
 		});
 	});
 };
