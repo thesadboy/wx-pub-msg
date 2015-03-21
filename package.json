@@ -9,7 +9,7 @@
   "author": "thesadboy@qq.com",
   "license": "MIT",
   "dependencies": {
-    "superagent": "^1.1.0"
+    "superagent": "1.1.0"
   },
   "devDependencies": {},
   "keywords": [
