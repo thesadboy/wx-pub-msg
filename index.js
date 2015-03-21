@@ -197,6 +197,10 @@ var getMd5 = function (pwd) {
  * @param cb 回调函数
  */
 exports.send = function (user, pwd, message, cb) {
+	if (!message || message.length > 600 || message.length < 1) {
+		console.error('[WX-PUB-MSG %s]消息长度应保持在1-600范围！', formatDate(new Date()));
+		return cb && cb('消息长度应保持在1-600范围！');
+	}
 	login(user, pwd, function (err) {
 		if (err) {
 			return cb && cb(err);

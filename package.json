@@ -1,6 +1,6 @@
 {
   "name": "wx-pub-msg",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "一个微信公众号群发消息的工具",
   "main": "index.js",
   "scripts": {
